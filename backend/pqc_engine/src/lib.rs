@@ -1,12 +1,17 @@
-﻿use anyhow::Result;
+﻿#[cfg(feature = "python")]
+mod python_bindings;
+#[cfg(feature = "python")]
+pub use python_bindings::*;
+
+use anyhow::Result;
 use pqcrypto_kyber::kyber1024;
 use pqcrypto_dilithium::dilithium5;
 use pqcrypto_traits::kem::{PublicKey, SecretKey, SharedSecret, Ciphertext};
-use pqcrypto_traits::sign::{PublicKey as SignPublicKey, SecretKey as SignSecretKey};
+use pqcrypto_traits::sign::{PublicKey as SignPublicKey, SecretKey as SignSecretKey, SignedMessage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PQCKeyPair {
     pub algorithm: String,
     pub public_key: Vec<u8>,
@@ -83,26 +88,28 @@ impl PQCEngine {
         Ok(ss.as_bytes().to_vec())
     }
 
-    /// Sign message using Dilithium
+    /// Sign message using Dilithium (returns detached signature + message)
     pub fn dilithium_sign(&self, secret_key: &[u8], message: &[u8]) -> Result<Vec<u8>> {
         let sk = dilithium5::SecretKey::from_bytes(secret_key)
             .map_err(|_| anyhow::anyhow!("Invalid secret key"))?;
         
-        let signature = dilithium5::sign(message, &sk);
+        let signed_msg = dilithium5::sign(message, &sk);
         
-        Ok(signature.as_bytes().to_vec())
+        // Return the complete signed message (includes signature)
+        Ok(signed_msg.as_bytes().to_vec())
     }
 
     /// Verify signature using Dilithium
-    pub fn dilithium_verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
+    pub fn dilithium_verify(&self, public_key: &[u8], signed_message: &[u8]) -> Result<Vec<u8>> {
         let pk = dilithium5::PublicKey::from_bytes(public_key)
             .map_err(|_| anyhow::anyhow!("Invalid public key"))?;
-        let sig = dilithium5::SignedMessage::from_bytes(signature)
-            .map_err(|_| anyhow::anyhow!("Invalid signature"))?;
+        let sig = dilithium5::SignedMessage::from_bytes(signed_message)
+            .map_err(|_| anyhow::anyhow!("Invalid signed message"))?;
         
+        // Open returns the original message if signature is valid
         match dilithium5::open(&sig, &pk) {
-            Ok(_) => Ok(true),
-            Err(_) => Ok(false),
+            Ok(msg) => Ok(msg.to_vec()),
+            Err(_) => Err(anyhow::anyhow!("Signature verification failed")),
         }
     }
 
@@ -112,6 +119,12 @@ impl PQCEngine {
 
     pub fn list_keys(&self) -> Vec<String> {
         self.key_store.keys().cloned().collect()
+    }
+}
+
+impl Default for PQCEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -128,6 +141,7 @@ mod tests {
         let ss2 = engine.kyber_decapsulate(&keypair.secret_key, &ct).unwrap();
         
         assert_eq!(ss1, ss2);
+        println!("✓ Kyber KEM test passed - shared secret length: {}", ss1.len());
     }
 
     #[test]
@@ -135,10 +149,45 @@ mod tests {
         let mut engine = PQCEngine::new();
         let keypair = engine.generate_dilithium_keypair("test_sig".to_string()).unwrap();
         
-        let message = b"Test message for PQC";
-        let signature = engine.dilithium_sign(&keypair.secret_key, message).unwrap();
-        let valid = engine.dilithium_verify(&keypair.public_key, message, &signature).unwrap();
+        let message = b"Test message for PQC migration";
+        let signed_msg = engine.dilithium_sign(&keypair.secret_key, message).unwrap();
+        let verified_msg = engine.dilithium_verify(&keypair.public_key, &signed_msg).unwrap();
         
-        assert!(valid);
+        assert_eq!(message.to_vec(), verified_msg);
+        println!("✓ Dilithium signature test passed");
+    }
+
+    #[test]
+    fn test_key_storage() {
+        let mut engine = PQCEngine::new();
+        
+        engine.generate_kyber_keypair("kyber_1".to_string()).unwrap();
+        engine.generate_dilithium_keypair("dilithium_1".to_string()).unwrap();
+        
+        let keys = engine.list_keys();
+        assert_eq!(keys.len(), 2);
+        assert!(keys.contains(&"kyber_1".to_string()));
+        assert!(keys.contains(&"dilithium_1".to_string()));
+        
+        println!("✓ Key storage test passed");
+    }
+
+    #[test]
+    fn test_invalid_signature() {
+        let mut engine = PQCEngine::new();
+        let keypair = engine.generate_dilithium_keypair("test_invalid".to_string()).unwrap();
+        
+        let message = b"Original message";
+        let signed_msg = engine.dilithium_sign(&keypair.secret_key, message).unwrap();
+        
+        // Corrupt the signed message
+        let mut corrupted = signed_msg.clone();
+        if let Some(byte) = corrupted.get_mut(10) {
+            *byte = byte.wrapping_add(1);
+        }
+        
+        let result = engine.dilithium_verify(&keypair.public_key, &corrupted);
+        assert!(result.is_err());
+        println!("✓ Invalid signature detection test passed");
     }
 }

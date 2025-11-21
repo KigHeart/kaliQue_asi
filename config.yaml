@@ -1,0 +1,95 @@
+﻿# kaliQue_asi Configuration
+
+system:
+  name: "kaliQue_asi"
+  version: "0.1.0"
+  environment: "development"
+
+pqc_algorithms:
+  kem:
+    - name: "Kyber-1024"
+      nist_level: 5
+      enabled: true
+    - name: "Kyber-768"
+      nist_level: 3
+      enabled: true
+  
+  signature:
+    - name: "Dilithium-5"
+      nist_level: 5
+      enabled: true
+    - name: "SPHINCS+-256f"
+      nist_level: 5
+      enabled: false
+
+migration:
+  default_strategy: "hybrid"
+  
+  strategies:
+    hybrid:
+      description: "Run both classical and PQC in parallel"
+      backwards_compatible: true
+      risk_level: "low"
+      
+    phased:
+      description: "Migrate components gradually"
+      backwards_compatible: true
+      risk_level: "medium"
+      
+    big_bang:
+      description: "Switch everything at once"
+      backwards_compatible: false
+      risk_level: "high"
+      
+    canary:
+      description: "Test with small traffic percentage"
+      backwards_compatible: true
+      risk_level: "low"
+  
+  constraints:
+    max_downtime_minutes: 30
+    performance_degradation_threshold: 0.20  # 20%
+    rollback_time_minutes: 5
+
+analysis:
+  file_extensions:
+    - "rs"
+    - "py"
+    - "js"
+    - "ts"
+    - "go"
+    - "java"
+    - "c"
+    - "cpp"
+    - "h"
+  
+  ignore_patterns:
+    - "node_modules"
+    - "target"
+    - "build"
+    - ".git"
+    - "__pycache__"
+
+agents:
+  coordinator:
+    max_concurrent_tasks: 5
+    task_timeout_seconds: 300
+    retry_attempts: 3
+  
+  roles:
+    - analyzer
+    - planner
+    - executor
+    - validator
+    - monitor
+
+api:
+  anthropic:
+    model: "claude-sonnet-4-20250514"
+    max_tokens: 8000
+    temperature: 0.7
+
+logging:
+  level: "INFO"
+  format: "json"
+  output: "logs/kalique.log"
