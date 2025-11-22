@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kaliQue_asi - PQC Migration Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 kaliQue_asi</h1>
+            <p>Post-Quantum Cryptography Migration Dashboard</p>
+            <div class="status" id="status">
+                <span class="status-indicator"></span>
+                <span id="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <!-- Test Section -->
+            <div class="card">
+                <h2>🧪 Test PQC Operations</h2>
+                <p>Test Kyber-1024 and Dilithium-5 cryptographic operations</p>
+                <div class="button-group">
+                    <button onclick="testPQC('all')" class="btn btn-primary">Test All</button>
+                    <button onclick="testPQC('kem')" class="btn btn-secondary">Test KEM</button>
+                    <button onclick="testPQC('signature')" class="btn btn-secondary">Test Signature</button>
+                </div>
+                <div id="test-output" class="output"></div>
+            </div>
+
+            <!-- Analyze Section -->
+            <div class="card">
+                <h2>📊 Analyze Codebase</h2>
+                <p>Scan your codebase for cryptographic usage and vulnerabilities</p>
+                <div class="form-group">
+                    <label>Project Path:</label>
+                    <input type="text" id="analyze-path" value="E:\kaliQue_asi" placeholder="Path to analyze">
+                </div>
+                <button onclick="analyzeCode()" class="btn btn-primary">Analyze</button>
+                <div id="analyze-output" class="output"></div>
+            </div>
+
+            <!-- Key Generation Section -->
+            <div class="card">
+                <h2>🔑 Generate PQC Keys</h2>
+                <p>Generate quantum-resistant cryptographic keys</p>
+                <div class="form-group">
+                    <label>Algorithm:</label>
+                    <select id="keygen-algorithm">
+                        <option value="kyber">Kyber-1024 (KEM)</option>
+                        <option value="dilithium">Dilithium-5 (Signature)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Key ID:</label>
+                    <input type="text" id="keygen-id" value="web_key_001" placeholder="Key identifier">
+                </div>
+                <div class="form-group">
+                    <label>Output Directory:</label>
+                    <input type="text" id="keygen-output" value="./keys" placeholder="Output path">
+                </div>
+                <button onclick="generateKeys()" class="btn btn-primary">Generate Keys</button>
+                <div id="keygen-output-display" class="output"></div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="card stats-card">
+                <h2>📈 System Statistics</h2>
+                <div class="stats-grid" id="stats">
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Tests Run</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Keys Generated</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Files Analyzed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with ❤️ for a quantum-safe future | Version 0.1.0</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
