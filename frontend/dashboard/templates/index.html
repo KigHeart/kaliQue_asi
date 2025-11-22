@@ -65,6 +65,41 @@
                 <div id="keygen-output-display" class="output"></div>
             </div>
 
+            <!-- Key Manager Section - NEW -->
+            <div class="card full-width">
+                <h2>🗝️ Key Manager</h2>
+                <p>View and manage your generated PQC keys</p>
+                <button onclick="loadKeys()" class="btn btn-secondary">Refresh Keys</button>
+                <div id="keys-list" class="keys-container">
+                    <p class="loading-text">Click "Refresh Keys" to load...</p>
+                </div>
+            </div>
+
+            <!-- Migration Plan Section - NEW -->
+            <div class="card full-width">
+                <h2>📋 Migration Plan Generator</h2>
+                <p>Generate AI-powered migration strategies</p>
+                <div class="form-group">
+                    <label>Analysis Report Path:</label>
+                    <input type="text" id="plan-report" value="./cli/analysis_report.md" placeholder="Path to analysis report">
+                </div>
+                <div class="form-group">
+                    <label>Migration Strategy:</label>
+                    <select id="plan-strategy">
+                        <option value="hybrid">Hybrid (Recommended)</option>
+                        <option value="phased">Phased</option>
+                        <option value="canary">Canary</option>
+                        <option value="big-bang">Big Bang</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Output Path:</label>
+                    <input type="text" id="plan-output" value="./migration_plan.md" placeholder="Output path">
+                </div>
+                <button onclick="generatePlan()" class="btn btn-primary">Generate Plan</button>
+                <div id="plan-output" class="output"></div>
+            </div>
+
             <!-- Statistics Section -->
             <div class="card stats-card">
                 <h2>📈 System Statistics</h2>
@@ -80,6 +115,10 @@
                     <div class="stat">
                         <div class="stat-value">0</div>
                         <div class="stat-label">Files Analyzed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Plans Created</div>
                     </div>
                 </div>
             </div>
